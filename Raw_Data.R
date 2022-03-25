@@ -13,4 +13,23 @@
 library(tidyverse)
 
 ##### Reading in the raw data ####
-RawData <- read.csv("https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050038/SHSD_Open_Data_1980_2021.csv")
+RawData <- read.csv("https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050038/SHSD_Open_Data_1980_2021.csv") 
+  
+RawData_w_Date <- RawData %>%  mutate(Date = as.Date(paste0(as.numeric(substr(Year,1,4))+1,"-03-31")))
+
+##### Creating summary dataframes for graphs to be developed from
+
+### Time Series with one variable
+# This example is Total demolitions of social housing stock in england by year
+TimeSeries_1var <- RawData %>%
+  filter(Disposal.Type == "Demolition") %>%
+  select(Date,Units) %>%
+  group_by(Date) %>%
+  summarise(Demolitions = sum(Units,na.rm=T))
+
+### Time Series with 2 variables
+TimeSeries_2var <- RawData %>%
+  filter(Disposal.Type=="Sale") %>%
+  group_by(Year,Provider) %>%
+  summarise(Sales = sum(Units,na.rm=T))
+
