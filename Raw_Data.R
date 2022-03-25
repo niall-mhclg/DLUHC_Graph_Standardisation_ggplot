@@ -4,7 +4,10 @@
 #Raw data for using to create and test new graph formats
 
 #Most data collected and presented by DLUHC will be at either a regional or local authority level
-#The example dataset used will be the social housing sales and demolitions open data and the Affordable Housing Supply open data
+#The example dataset used will be: 
+#Social housing sales and demolitions open data  
+#Affordable Housing Supply open data
+#Local Authority Housing Data
 
 #These datasets will be linked directly, but this link may break in the future, so can be found at
 # https://www.gov.uk/government/statistical-data-sets/live-tables-on-social-housing-sales#social-housing-sales-and-demolitions-open-data
@@ -13,6 +16,7 @@
 #####Loading the required packages ####
 library(tidyverse)
 
+
 ##### Reading in the raw data ####
 Sales_Dems <- read.csv("https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1050038/SHSD_Open_Data_1980_2021.csv") 
   
@@ -20,6 +24,7 @@ Sales_Dems_w_Date <- Sales_Dems %>%  mutate(Date = as.Date(paste0(as.numeric(sub
 
 Supply <- read.csv("https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1034092/AHS_199192_to_202021_open_data.csv")
 
+LAHS <- read.csv("https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1052626/LAHS_201112_to_202021_open_data_02_2022.csv")
 ##### Creating summary dataframes for graphs to be developed from
 
 ### Time Series with no variable
@@ -108,5 +113,37 @@ Reg_Discrete_3x1var <- Sales_Dems_w_Date %>%
   group_by(RGN20NM,Disposal.Detail.Tier.1) %>%
   summarise(Sales=sum(Units,na.rm=T))
 
-### Scatter Graph
-Scatter_xy <- Sales_Dems
+### Scatter data no extra variables
+Supply_2021 <- Supply %>%
+  filter(Provider=="LA",Year == "2020-21",str_detect(Tenure,"Rent"),Completions=="Completion") %>%
+  group_by(LA.name) %>%
+  summarise(Completions = sum(Units,na.rm=T))
+
+Sales_2021 <-  Sales_Dems %>%
+  filter(Year=="2020-21",Provider=="LA") %>%
+  group_by(LA_NAME) %>%
+  summarise(Losses = sum(Units,na.rm=T))
+
+Scatter_xy <- inner_join(Supply_2021,Sales_2021, by=c("LA.name"="LA_NAME"))
+
+### Scatter data 1 extra numeric variables
+Stock_2021 <- LAHS %>%
+  filter(Year=="2020-21") %>%
+  select(LA_NAME,"Stock"=a1a)
+
+Scatter_xy_1var_num <- inner_join(Scatter_xy,Stock_2021, by=c("LA.name"="LA_NAME")) %>%
+  filter(Stock>20) %>%
+  mutate(LossesperStock = Losses/Stock,CompletionsperStock = Completions/Stock) %>%
+  select(LA.name,LossesperStock,CompletionsperStock,Stock)
+
+### Scatter data 1 extra discrete variable
+RGN_Lookup <- Sales_Dems %>%
+  distinct(LA_NAME,RGN20NM)
+
+Scatter_xy_1var_dis <- inner_join(Scatter_xy,RGN_Lookup, by=c("LA.name"="LA_NAME"))
+
+### Scatter data 1 dis 1 num variable
+Scatter_xy_2var <- Scatter_xy_1var_num %>%
+  inner_join(.,RGN_Lookup,by=c("LA.name"="LA_NAME"))
+
+
