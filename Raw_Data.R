@@ -19,17 +19,46 @@ RawData_w_Date <- RawData %>%  mutate(Date = as.Date(paste0(as.numeric(substr(Ye
 
 ##### Creating summary dataframes for graphs to be developed from
 
-### Time Series with one variable
+### Time Series with no variable
 # This example is Total demolitions of social housing stock in england by year
-TimeSeries_1var <- RawData %>%
+TimeSeries_1var <- RawData_w_Date %>%
   filter(Disposal.Type == "Demolition") %>%
-  select(Date,Units) %>%
   group_by(Date) %>%
   summarise(Demolitions = sum(Units,na.rm=T))
 
-### Time Series with 2 variables
-TimeSeries_2var <- RawData %>%
+### Time Series with 2 factors of one variable
+TimeSeries_2x1var <- RawData_w_Date %>%
   filter(Disposal.Type=="Sale") %>%
-  group_by(Year,Provider) %>%
+  group_by(Date,Provider) %>%
   summarise(Sales = sum(Units,na.rm=T))
+
+### Time Series with 3 factors of 1 variable
+TimeSeries_3x1var <- RawData_w_Date %>%
+  filter(Disposal.Type=="Sale") %>%
+  group_by(Date,Disposal.Detail.Tier.1) %>%
+  summarise(Sales = sum(Units,na.rm=T))
+
+### Time Series with n factors of variable
+#Set value for n
+n = 10
+#Select n different local authorities
+LA_List <- unique(RawData_w_Date$LA_NAME)[1:n]
+
+TimeSeries_n_var <- RawData_w_Date %>%
+  filter(Disposal.Type=="Sale"&LA_NAME %in% LA_List) %>%
+  group_by(Date,LA_NAME) %>%
+  summarise(Sales = sum(Units,na.rm=T))
+
+  
+### Discrete Data with 2 factors of 2 variables
+Discrete_2x2var <- RawData_w_Date %>%
+  filter(Year == "2020-21") %>%
+  group_by(Provider,Disposal.Type) %>%
+  summarise(Units = sum(Units,na.rm=T))
+
+### Discrete Data with up to 4 factors of 3 variables
+Discrete_4x3var <- RawData_w_Date %>%
+  filter(Year == "2020-21") %>%
+  group_by(Provider,LAD20TYPE,Disposal.Type) %>%
+  summarise(Units = sum(Units,na.rm=T))
 
