@@ -44,7 +44,8 @@ TimeSeries_2x1var <- Sales_Dems_w_Date %>%
 TimeSeries_3x1var <- Sales_Dems_w_Date %>%
   filter(Disposal.Type=="Sale") %>%
   group_by(Date,Disposal.Detail.Tier.1) %>%
-  summarise(Sales = sum(Units,na.rm=T))
+  summarise(Sales = sum(Units,na.rm=T)) %>%
+  rename("variable"="Disposal.Detail.Tier.1")
 
 ### Time Series with n factors of variable
 #Set value for n
